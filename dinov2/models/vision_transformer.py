@@ -56,6 +56,7 @@ class DinoVisionTransformer(nn.Module):
         proj_bias=True,
         drop_path_rate=0.0,
         drop_path_uniform=False,
+        centric = False,
         init_values=None,  # for layerscale: None or 0 => no layerscale
         embed_layer=PatchEmbed,
         act_layer=nn.GELU,
@@ -133,23 +134,42 @@ class DinoVisionTransformer(nn.Module):
             ffn_layer = f
         else:
             raise NotImplementedError
-
-        blocks_list = [
-            block_fn(
-                dim=embed_dim,
-                num_heads=num_heads,
-                mlp_ratio=mlp_ratio,
-                qkv_bias=qkv_bias,
-                proj_bias=proj_bias,
-                ffn_bias=ffn_bias,
-                drop_path=dpr[i],
-                norm_layer=norm_layer,
-                act_layer=act_layer,
-                ffn_layer=ffn_layer,
-                init_values=init_values,
-            )
-            for i in range(depth)
-        ]
+        if not centric:
+            blocks_list = [
+                block_fn(
+                    dim=embed_dim,
+                    num_heads=num_heads,
+                    mlp_ratio=mlp_ratio,
+                    qkv_bias=qkv_bias,
+                    proj_bias=proj_bias,
+                    ffn_bias=ffn_bias,
+                    drop_path=dpr[i],
+                    norm_layer=norm_layer,
+                    act_layer=act_layer,
+                    ffn_layer=ffn_layer,
+                    init_values=init_values,
+                )
+                for i in range(depth)
+            ]
+        else:
+            areas = [1 for i in range(40)]
+            blocks_list = [
+                block_fn(
+                    dim=embed_dim,
+                    num_heads=num_heads,
+                    mlp_ratio=mlp_ratio,
+                    qkv_bias=qkv_bias,
+                    proj_bias=proj_bias,
+                    ffn_bias=ffn_bias,
+                    drop_path=dpr[i],
+                    norm_layer=norm_layer,
+                    act_layer=act_layer,
+                    ffn_layer=ffn_layer,
+                    init_values=init_values,
+                    area = areas[i],
+                )
+                for i in range(depth)
+            ]
         if block_chunks > 0:
             self.chunked_blocks = True
             chunked_blocks = []
@@ -391,6 +411,23 @@ def vit_giant2(patch_size=16, num_register_tokens=0, **kwargs):
         mlp_ratio=4,
         block_fn=partial(Block, attn_class=MemEffAttention),
         num_register_tokens=num_register_tokens,
+        **kwargs,
+    )
+    return model
+
+def centric_vit_giant2(patch_size=16, num_register_tokens=0, **kwargs):
+    """
+    Close to ViT-giant, with embed-dim 1536 and 24 heads => embed-dim per head 64
+    """
+    model = DinoVisionTransformer(
+        patch_size=patch_size,
+        embed_dim=1536,
+        depth=40,
+        num_heads=24,
+        mlp_ratio=4,
+        block_fn=partial(Block, attn_class=MemEffAttention),
+        num_register_tokens=num_register_tokens,
+        centric = True,
         **kwargs,
     )
     return model
