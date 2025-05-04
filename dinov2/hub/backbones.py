@@ -62,7 +62,7 @@ def _make_dinov2_model(
         except:
             print("Centric Not Found, initializing default dino")
             state_dict = torch.hub.load_state_dict_from_url(url.replace("cent14", "vitg14"), map_location="cpu")
-            model.load_state_dict(state_dict, strict=False)
+            model.load_state_dict(state_dict, strict=True)
     return model
 
 
