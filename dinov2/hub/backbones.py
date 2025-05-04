@@ -55,9 +55,14 @@ def _make_dinov2_model(
     if pretrained:
         model_full_name = _make_dinov2_model_name(arch_name, patch_size, num_register_tokens)
         url = _DINOV2_BASE_URL + f"/{model_base_name}/{model_full_name}_pretrain.pth"
-        state_dict = torch.hub.load_state_dict_from_url(url, map_location="cpu")
-        model.load_state_dict(state_dict, strict=True)
-
+        try:
+            print("Centric Attention dinov2 initialized")
+            state_dict = torch.hub.load_state_dict_from_url(url, map_location="cpu")
+            model.load_state_dict(state_dict, strict=True)
+        except:
+            print("Centric Not Found, initializing default dino")
+            state_dict = torch.hub.load_state_dict_from_url(url.replace("centric_dinov2_vitg14", "dinov2_vitg14"), map_location="cpu")
+            model.load_state_dict(state_dict, strict=False)
     return model
 
 
