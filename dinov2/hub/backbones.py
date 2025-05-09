@@ -31,7 +31,7 @@ def _make_dinov2_model(
     **kwargs,
 ):
     from ..models import vision_transformer as vits
-
+    print(vits.__dict__)
     if isinstance(weights, str):
         try:
             weights = Weights[weights]
@@ -111,7 +111,7 @@ def centric_dinov2_vitg14(*, pretrained: bool = True, weights: Union[Weights, st
         **kwargs,
     )
 
-def replaceme_dinov2_vitg14(*, pretrained: bool = False, weights: Union[Weights, str] = Weights.LVD142M, **kwargs):
+def replaceme_dinov2_vitg14(*, pretrained: bool = False, weights: Union[Weights, str] = "", **kwargs):
     """
     Centric DINOv2 ViT-g/14 model (optionally) pretrained on the LVD-142M dataset.
     """
