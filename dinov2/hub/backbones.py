@@ -111,7 +111,7 @@ def centric_dinov2_vitg14(*, pretrained: bool = True, weights: Union[Weights, st
         **kwargs,
     )
 
-def replaceme_dinov2_vitg14(*, pretrained: bool = False, weights: Union[Weights, str] = "", **kwargs):
+def replaceme_dinov2_vitg14(*, pretrained: bool = False, weights: Union[Weights, str] = None, **kwargs):
     """
     Centric DINOv2 ViT-g/14 model (optionally) pretrained on the LVD-142M dataset.
     """
