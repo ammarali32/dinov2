@@ -111,6 +111,18 @@ def centric_dinov2_vitg14(*, pretrained: bool = True, weights: Union[Weights, st
         **kwargs,
     )
 
+def replaceme_dinov2_vitg14(*, pretrained: bool = False, weights: Union[Weights, str] = Weights.LVD142M, **kwargs):
+    """
+    Centric DINOv2 ViT-g/14 model (optionally) pretrained on the LVD-142M dataset.
+    """
+    return _make_dinov2_model(
+        arch_name="replaceme_vit_giant2",
+        ffn_layer="swiglufused",
+        weights=weights,
+        pretrained=pretrained,
+        **kwargs,
+    )
+
 
 def dinov2_vits14_reg(*, pretrained: bool = True, weights: Union[Weights, str] = Weights.LVD142M, **kwargs):
     """
