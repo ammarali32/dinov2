@@ -66,6 +66,8 @@ class DinoVisionTransformer(nn.Module):
         num_register_tokens=0,
         interpolate_antialias=False,
         interpolate_offset=0.1,
+        linear_transform=False,
+        transform_index = None,
     ):
         """
         Args:
@@ -94,7 +96,7 @@ class DinoVisionTransformer(nn.Module):
         """
         super().__init__()
         norm_layer = partial(nn.LayerNorm, eps=1e-6)
-
+        self.transform_index = transform_index
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
         self.num_tokens = 1
         self.n_blocks = depth
@@ -134,6 +136,8 @@ class DinoVisionTransformer(nn.Module):
             ffn_layer = f
         else:
             raise NotImplementedError
+        if linear_transform:
+            self.transformation = nn.Linear(embed_dim, embed_dim, bias=False)
         if not centric:
             blocks_list = [
                 block_fn(
@@ -253,8 +257,10 @@ class DinoVisionTransformer(nn.Module):
 
     def forward_features_list(self, x_list, masks_list):
         x = [self.prepare_tokens_with_masks(x, masks) for x, masks in zip(x_list, masks_list)]
-        for blk in self.blocks:
+        for idx, blk in enumerate(self.blocks):
             x = blk(x)
+            if idx == self.transform_index:
+                x = self.transformation(x)
 
         all_x = x
         output = []
@@ -277,9 +283,10 @@ class DinoVisionTransformer(nn.Module):
 
         x = self.prepare_tokens_with_masks(x, masks)
 
-        for blk in self.blocks:
+        for idx, blk in enumerate(self.blocks):
             x = blk(x)
-
+            if idx == self.transform_index:
+                x = self.transformation(x)
         x_norm = self.norm(x)
         return {
             "x_norm_clstoken": x_norm[:, 0],
@@ -296,6 +303,8 @@ class DinoVisionTransformer(nn.Module):
         blocks_to_take = range(total_block_len - n, total_block_len) if isinstance(n, int) else n
         for i, blk in enumerate(self.blocks):
             x = blk(x)
+            if i == self.transform_index:
+                x = self.transformation(x)
             if i in blocks_to_take:
                 output.append(x)
         assert len(output) == len(blocks_to_take), f"only {len(output)} / {len(blocks_to_take)} blocks found"
@@ -411,6 +420,24 @@ def vit_giant2(patch_size=16, num_register_tokens=0, **kwargs):
         mlp_ratio=4,
         block_fn=partial(Block, attn_class=MemEffAttention),
         num_register_tokens=num_register_tokens,
+        **kwargs,
+    )
+    return model
+
+def replaceme_vit_giant2(patch_size=16, num_register_tokens=0, **kwargs):
+    """
+    Close to ViT-giant, with embed-dim 1536 and 24 heads => embed-dim per head 64
+    """
+    model = DinoVisionTransformer(
+        patch_size=patch_size,
+        embed_dim=1536,
+        depth=30,
+        num_heads=24,
+        mlp_ratio=4,
+        block_fn=partial(Block, attn_class=MemEffAttention),
+        num_register_tokens=num_register_tokens,
+        linear_transform = True,
+        transform_index = 28,
         **kwargs,
     )
     return model
